@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prácticas Profesionalizantes | MMO - San Miguel</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --border: #e2e8f0;
+      --success: #166534;
+      --success-bg: #dcfce7;
+      --warning: #854d0e;
+      --warning-bg: #fef9c3;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 3rem;
+    }
+
+    header {
+      background-color: var(--primary);
+      color: white;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      opacity: 0.9;
+      font-size: 1rem;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .controls-panel {
+      background: var(--card-bg);
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .search-input, .select-filter {
+      padding: 0.6rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-input:focus, .select-filter:focus {
+      border-color: var(--primary);
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      gap: 0.5rem;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-en-curso {
+      background-color: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .badge-finalizado {
+      background-color: var(--success-bg);
+      color: var(--success);
+    }
+
+    .meta-info {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .card-description {
+      font-size: 0.95rem;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+
+    .entregables-list {
+      font-size: 0.85rem;
+      background: #f1f5f9;
+      padding: 0.75rem;
+      border-radius: 6px;
+      margin-top: auto;
+    }
+
+    .entregables-list strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+
+    .entregables-list ul {
+      list-style-type: disc;
+      padding-left: 1.2rem;
+    }
+
+    .error-msg {
+      background-color: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      grid-column: 1 / -1;
+    }
+
+    .empty-msg {
+      text-align: center;
+      grid-column: 1 / -1;
+      color: var(--text-muted);
+      padding: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Prácticas Profesionalizantes</h1>
+    <p>Maestro Mayor de Obras (MMO) — San Miguel</p>
+  </header>
+
+  <main>
+    <section class="controls-panel">
+      <input type="text" id="searchInput" class="search-input" placeholder="Buscar por título o contenido...">
+      
+      <select id="statusFilter" class="select-filter">
+        <option value="todos">Todos los estados</option>
+        <option value="En curso">En curso</option>
+        <option value="Finalizado">Finalizado</option>
+      </select>
+
+      <select id="yearFilter" class="select-filter">
+        <option value="todos">Todos los años</option>
+        <option value="2026">2026</option>
+        <option value="2025">2025</option>
+      </select>
+    </section>
+
+    <section id="practicasContainer" class="grid-container">
+      <p class="empty-msg">Cargando base de datos...</p>
+    </section>
+  </main>
+
+  <script>
+    let todasLasPracticas = [];
+
+    // Cargar la base de datos de forma segura
+    async function initApp() {
+      const container = document.getElementById('practicasContainer');
+      
+      // Intentar varias rutas comunes para prevenir fallos de ubicación en GH Pages
+      const posiblesRutas = ['./data/db.json', 'data/db.json', '/PracticasProf/data/db.json'];
+      let data = null;
+
+      for (const ruta of posiblesRutas) {
+        try {
+          const res = await fetch(ruta);
+          if (res.ok) {
+            data = await res.json();
+            break;
+          }
+        } catch (e) {
+          // Continuar al siguiente intento
+        }
+      }
+
+      if (!data || !data.practicas) {
+        container.innerHTML = `
+          <div class="error-msg">
+            <strong>Error al cargar la base de datos</strong><br>
+            Asegúrate de haber creado el archivo <code>data/db.json</code> en tu repositorio.
+          </div>
+        `;
+        return;
+      }
+
+      todasLasPracticas = data.practicas;
+      renderPracticas(todasLasPracticas);
+      setupEventListeners();
+    }
+
+    // Renderizar las tarjetas
+    function renderPracticas(items) {
+      const container = document.getElementById('practicasContainer');
+
+      if (items.length === 0) {
+        container.innerHTML = '<p class="empty-msg">No se encontraron prácticas que coincidan con los filtros.</p>';
+        return;
+      }
+
+      container.innerHTML = items.map(p => {
+        const badgeClass = p.estado === 'En curso' ? 'badge-en-curso' : 'badge-finalizado';
+        const entregablesHTML = p.entregables && p.entregables.length > 0
+          ? `<div class="entregables-list">
+               <strong>Entregables:</strong>
+               <ul>${p.entregables.map(e => `<li>${e}</li>`).join('')}</ul>
+             </div>`
+          : '';
+
+        return `
+          <article class="card">
+            <div>
+              <div class="card-header">
+                <h2 class="card-title">${p.titulo}</h2>
+                <span class="badge ${badgeClass}">${p.estado}</span>
+              </div>
+              <div class="meta-info">
+                <span><strong>Año:</strong> ${p.anio}</span>
+                <span>•</span>
+                <span><strong>Código:</strong> ${p.codigo_mmo}</span>
+                <span>•</span>
+                <span><strong>Carga:</strong> ${p.horas_acreditadas}hs</span>
+              </div>
+              <p class="card-description">${p.descripcion}</p>
+            </div>
+            ${entregablesHTML}
+          </article>
+        `;
+      }).join('');
+    }
+
+    // Filtrar prácticas
+    function filterPracticas() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+      const year = document.getElementById('yearFilter').value;
+
+      const filtradas = todasLasPracticas.filter(p => {
+        const matchSearch = p.titulo.toLowerCase().includes(search) || 
+                            p.descripcion.toLowerCase().includes(search) ||
+                            p.codigo_mmo.toLowerCase().includes(search);
+        
+        const matchStatus = status === 'todos' || p.estado === status;
+        const matchYear = year === 'todos' || p.anio.toString() === year;
+
+        return matchSearch && matchStatus && matchYear;
+      });
+
+      renderPracticas(filtradas);
+    }
+
+    function setupEventListeners() {
+      document.getElementById('searchInput').addEventListener('input', filterPracticas);
+      document.getElementById('statusFilter').addEventListener('change', filterPracticas);
+      document.getElementById('yearFilter').addEventListener('change', filterPracticas);
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
