@@ -30,18 +30,17 @@
 
   function toast(msg) {
     var t = document.getElementById("toast");
+    if (!t) return;
     t.textContent = msg;
     t.classList.add("show");
     setTimeout(function () { t.classList.remove("show"); }, 2200);
   }
 
   function cohortName(c) { 
+    if (!c) return "Sin especialidad";
     return (c.specialty || "Sin especialidad") + " " + (c.year || ""); 
   }
 
-  document.getElementById("todayLabel").textContent = new Date().toLocaleDateString("es-AR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-
-  // Storage Handlers
   function loadFromStorage() {
     try {
       var cData = localStorage.getItem(STORAGE_KEY_COHORTS);
@@ -51,7 +50,9 @@
       var pData = localStorage.getItem(STORAGE_KEY_PRACTICES);
       state.practices = pData ? JSON.parse(pData) : [];
     } catch(e) {
-      state.cohorts = [];
+      state.cohorts = [
+        { id: "c1", specialty: "Maestro Mayor de Obras", year: 2026, horasObjetivo: 200 }
+      ];
       state.practices = [];
     }
     updateCohortsState();
@@ -77,53 +78,60 @@
     renderPractices();
   }
 
-  // ---------- Tabs ----------
-  document.getElementById("tabs").addEventListener("click", function (e) {
-    var btn = e.target.closest("button[data-view]");
-    if (!btn) return;
-    document.querySelectorAll("nav.tabs button").forEach(function (b) { b.classList.remove("active"); });
-    btn.classList.add("active");
-    document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
-    document.getElementById("view-" + btn.dataset.view).classList.add("active");
-    if (btn.dataset.view === "resumen") renderSummary();
-  });
+  // Cambiar entre pestañas
+  function switchTab(targetView) {
+    var buttons = document.querySelectorAll("nav.tabs button");
+    buttons.forEach(function (b) { 
+      if (b.getAttribute("data-view") === targetView) {
+        b.classList.add("active");
+      } else {
+        b.classList.remove("active");
+      }
+    });
 
-  // ---------- Cohortes ----------
+    var views = document.querySelectorAll(".view");
+    views.forEach(function (v) { 
+      if (v.id === "view-" + targetView) {
+        v.classList.add("active");
+      } else {
+        v.classList.remove("active");
+      }
+    });
+
+    if (targetView === "resumen") {
+      renderSummary();
+    }
+  }
+
   function populateCohortSelects() {
     var opts = state.cohorts.map(function (c) { return '<option value="' + c.id + '">' + esc(cohortName(c)) + "</option>"; }).join("");
     var filterSel = document.getElementById("practiceCohortFilter");
-    var cur = filterSel.value;
-    filterSel.innerHTML = '<option value="">Todas</option>' + opts;
-    if (state.cohortsById[cur]) filterSel.value = cur;
+    if (filterSel) {
+      var cur = filterSel.value;
+      filterSel.innerHTML = '<option value="">Todas</option>' + opts;
+      if (state.cohortsById[cur]) filterSel.value = cur;
+    }
 
     var modalSel = document.getElementById("pCohort");
-    modalSel.innerHTML = opts || '<option value="">Creá una cohorte primero</option>';
+    if (modalSel) {
+      modalSel.innerHTML = opts || '<option value="">Creá una cohorte primero</option>';
+    }
   }
 
   function renderCohorts() {
     var tbody = document.getElementById("cohortsTbody");
-    document.getElementById("cohortsEmpty").style.display = state.cohorts.length ? "none" : "block";
+    var emptyEl = document.getElementById("cohortsEmpty");
+    if (!tbody) return;
+    if (emptyEl) emptyEl.style.display = state.cohorts.length ? "none" : "block";
+    
     tbody.innerHTML = state.cohorts.map(function (c) {
       var count = state.practices.filter(function (p) { return p.cohortId === c.id; }).length;
       return "<tr><td>" + esc(cohortName(c)) + "</td><td>" + esc(c.specialty || "—") + "</td><td>" + esc(c.year || "—") + "</td>" +
         "<td>" + (c.horasObjetivo != null ? c.horasObjetivo : "—") + "</td><td>" + count + "</td>" +
-        "<td style="white-space:nowrap;"><button class="btn secondary small" data-editcohort="" + c.id + "">Editar</button> " +
-        "<button class="btn danger" data-delcohort="" + c.id + "">Eliminar</button></td></tr>";
+        "<td style=\"white-space:nowrap;\"><button class=\"btn secondary small\" data-editcohort=\"" + c.id + "\">Editar</button> " +
+        "<button class=\"btn danger\" data-delcohort=\"" + c.id + "\">Eliminar</button></td></tr>";
     }).join("");
   }
-
-  document.getElementById("cohortsTbody").addEventListener("click", function (e) {
-    var editId = e.target.dataset.editcohort;
-    var delId = e.target.dataset.delcohort;
-    if (editId) openCohortModal(editId);
-    if (delId) {
-      if (confirm("¿Eliminar esta cohorte? Las prácticas asociadas no se borran, pero quedarán sin cohorte.")) {
-        state.cohorts = state.cohorts.filter(function(x) { return x.id !== delId; });
-        saveCohorts();
-        toast("Cohorte eliminada");
-      }
-    }
-  });
 
   function openCohortModal(id) {
     state.editingCohortId = id || null;
@@ -135,27 +143,6 @@
     document.getElementById("cohortModalBg").classList.add("show");
   }
 
-  document.getElementById("newCohortBtn").addEventListener("click", function () { openCohortModal(null); });
-  document.getElementById("cohortCancelBtn").addEventListener("click", function () { document.getElementById("cohortModalBg").classList.remove("show"); });
-  document.getElementById("cohortSaveBtn").addEventListener("click", function () {
-    var specialty = document.getElementById("cSpecialty").value.trim();
-    var year = Number(document.getElementById("cYear").value) || null;
-    if (!specialty || !year) { toast("Completá especialidad y año"); return; }
-    var data = { specialty: specialty, year: year, horasObjetivo: Number(document.getElementById("cHorasObjetivo").value) || 0 };
-    
-    if (state.editingCohortId) {
-      var idx = state.cohorts.findIndex(function(x) { return x.id === state.editingCohortId; });
-      if (idx !== -1) state.cohorts[idx] = Object.assign({}, state.cohorts[idx], data);
-    } else {
-      data.id = "c_" + Date.now();
-      state.cohorts.push(data);
-    }
-    saveCohorts();
-    toast("Cohorte guardada");
-    document.getElementById("cohortModalBg").classList.remove("show");
-  });
-
-  // ---------- Practicas ----------
   function hoursBarHtml(realizadas, objetivo) {
     var r = Number(realizadas) || 0;
     var o = Number(objetivo) || 0;
@@ -166,52 +153,44 @@
   }
 
   function renderPractices() {
-    var q = document.getElementById("practiceSearch").value.trim().toLowerCase();
-    var cohortF = document.getElementById("practiceCohortFilter").value;
-    var statusF = document.getElementById("practiceStatusFilter").value;
+    var searchEl = document.getElementById("practiceSearch");
+    var cohortFEl = document.getElementById("practiceCohortFilter");
+    var statusFEl = document.getElementById("practiceStatusFilter");
+    
+    var q = searchEl ? searchEl.value.trim().toLowerCase() : "";
+    var cohortF = cohortFEl ? cohortFEl.value : "";
+    var statusF = statusFEl ? statusFEl.value : "";
+
     var list = state.practices.filter(function (p) {
       if (q && (p.alumno || "").toLowerCase().indexOf(q) === -1) return false;
       if (cohortF && p.cohortId !== cohortF) return false;
       if (statusF && p.estado !== statusF) return false;
       return true;
     });
+
     var tbody = document.getElementById("practicesTbody");
-    document.getElementById("practicesEmpty").style.display = list.length ? "none" : "block";
+    var emptyEl = document.getElementById("practicesEmpty");
+    if (!tbody) return;
+    if (emptyEl) emptyEl.style.display = list.length ? "none" : "block";
+
     tbody.innerHTML = list.map(function (p) {
       var c = state.cohortsById[p.cohortId];
       var meta = ESTADO_META[p.estado] || { emoji: "", cls: "neutral" };
       return "<tr>" +
         "<td>" + esc(p.alumno || "—") + "</td>" +
-        "<td class="muted">" + esc(c ? cohortName(c) : "—") + "</td>" +
+        "<td class=\"muted\">" + esc(c ? cohortName(c) : "—") + "</td>" +
         "<td>" + esc(p.oferente || "—") + "</td>" +
         "<td>" + esc(p.rotacion || "—") + "</td>" +
-        "<td><span class="tag " + meta.cls + "">" + meta.emoji + " " + esc(p.estado || "—") + "</span></td>" +
+        "<td><span class=\"tag " + meta.cls + "\">" + meta.emoji + " " + esc(p.estado || "—") + "</span></td>" +
         "<td>" + hoursBarHtml(p.horasRealizadas, p.horasObjetivo) + "</td>" +
-        "<td class="muted">" + esc(p.fechaFin || "—") + "</td>" +
-        "<td style="white-space:nowrap;">" +
-          "<button class="btn secondary small" data-edit="" + p.id + "">Editar</button> " +
-          "<button class="btn danger" data-del="" + p.id + "">Eliminar</button>" +
+        "<td class=\"muted\">" + esc(p.fechaFin || "—") + "</td>" +
+        "<td style=\"white-space:nowrap;\">" +
+          "<button class=\"btn secondary small\" data-edit=\"" + p.id + "\">Editar</button> " +
+          "<button class=\"btn danger\" data-del=\"" + p.id + "\">Eliminar</button>" +
         "</td>" +
       "</tr>";
     }).join("");
   }
-
-  document.getElementById("practiceSearch").addEventListener("input", renderPractices);
-  document.getElementById("practiceCohortFilter").addEventListener("change", renderPractices);
-  document.getElementById("practiceStatusFilter").addEventListener("change", renderPractices);
-
-  document.getElementById("practicesTbody").addEventListener("click", function (e) {
-    var editId = e.target.dataset.edit;
-    var delId = e.target.dataset.del;
-    if (editId) openPracticeModal(editId);
-    if (delId) {
-      if (confirm("¿Eliminar esta práctica?")) {
-        state.practices = state.practices.filter(function(x) { return x.id !== delId; });
-        savePractices();
-        toast("Práctica eliminada");
-      }
-    }
-  });
 
   function openPracticeModal(id) {
     state.editingPracticeId = id || null;
@@ -242,78 +221,6 @@
     document.getElementById("practiceModalBg").classList.add("show");
   }
 
-  document.getElementById("newPracticeBtn").addEventListener("click", function () {
-    if (!state.cohorts.length) { toast("Creá primero una cohorte"); return; }
-    openPracticeModal(null);
-  });
-  document.getElementById("practiceCancelBtn").addEventListener("click", function () { document.getElementById("practiceModalBg").classList.remove("show"); });
-  document.getElementById("pCohort").addEventListener("change", function () {
-    if (state.editingPracticeId) return;
-    var c = state.cohortsById[this.value];
-    if (c && c.horasObjetivo != null) document.getElementById("pHorasObjetivo").value = c.horasObjetivo;
-  });
-
-  document.getElementById("practiceSaveBtn").addEventListener("click", function () {
-    var alumno = document.getElementById("pAlumno").value.trim();
-    var cohortId = document.getElementById("pCohort").value;
-    if (!alumno) { toast("El nombre del alumno es obligatorio"); return; }
-    if (!cohortId) { toast("Elegí una cohorte"); return; }
-    var data = {
-      alumno: alumno,
-      dni: document.getElementById("pDni").value.trim(),
-      celular: document.getElementById("pCelular").value.trim(),
-      email: document.getElementById("pEmail").value.trim(),
-      cohortId: cohortId,
-      oferente: document.getElementById("pOferente").value.trim(),
-      rotacion: document.getElementById("pRotacion").value,
-      estado: document.getElementById("pEstado").value,
-      fechaInicio: document.getElementById("pFechaInicio").value,
-      fechaFin: document.getElementById("pFechaFin").value,
-      entrada: document.getElementById("pEntrada").value,
-      salida: document.getElementById("pSalida").value,
-      turno: document.getElementById("pTurno").value,
-      dias: document.getElementById("pDias").value.trim(),
-      horasRealizadas: Number(document.getElementById("pHorasRealizadas").value) || 0,
-      horasObjetivo: Number(document.getElementById("pHorasObjetivo").value) || 0,
-      calificacion: document.getElementById("pCalificacion").value.trim(),
-      autorizacion: document.getElementById("pAutorizacion").value === "true",
-      encuestaFinal: document.getElementById("pEncuesta").value === "true",
-      disposiciones: document.getElementById("pDisposiciones").value.trim(),
-      notas: document.getElementById("pNotas").value.trim()
-    };
-
-    if (state.editingPracticeId) {
-      var idx = state.practices.findIndex(function(x) { return x.id === state.editingPracticeId; });
-      if (idx !== -1) state.practices[idx] = Object.assign({}, state.practices[idx], data);
-    } else {
-      data.id = "p_" + Date.now();
-      state.practices.push(data);
-    }
-    savePractices();
-    toast("Práctica guardada");
-    document.getElementById("practiceModalBg").classList.remove("show");
-  });
-
-  // Export CSV
-  document.getElementById("exportCsvBtn").addEventListener("click", function () {
-    var rows = [["Alumno", "DNI", "Cohorte", "Oferente", "Rotación", "Estado", "Horas realizadas", "Horas objetivo", "Fecha inicio", "Fecha fin", "Calificación"]];
-    state.practices.forEach(function (p) {
-      var c = state.cohortsById[p.cohortId];
-      rows.push([p.alumno || "", p.dni || "", c ? cohortName(c) : "", p.oferente || "", p.rotacion || "", p.estado || "",
-        p.horasRealizadas || 0, p.horasObjetivo || 0, p.fechaInicio || "", p.fechaFin || "", p.calificacion || ""]);
-    });
-    var csvContent = "data:text/csv;charset=utf-8,﻿" + rows.map(function (r) { return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(","); }).join("
-");
-    var encodedUri = encodeURI(csvContent);
-    var link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "practicas.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  });
-
-  // ---------- Resumen ----------
   function renderSummary() {
     var total = state.practices.length;
     var counts = {};
@@ -322,15 +229,26 @@
       counts[p.estado] = (counts[p.estado] || 0) + 1;
       horas += Number(p.horasRealizadas) || 0;
     });
-    document.getElementById("sumTotal").textContent = total;
-    document.getElementById("sumEnCurso").textContent = counts["En curso"] || 0;
-    document.getElementById("sumFinalizado").textContent = counts["Finalizado"] || 0;
-    document.getElementById("sumBloqueada").textContent = (counts["Bloqueada"] || 0) + (counts["No Finalizada"] || 0);
-    document.getElementById("sumHoras").textContent = horas.toLocaleString("es-AR");
-    document.getElementById("sumHorasProm").textContent = total ? Math.round(horas / total) : 0;
+
+    var sumTotal = document.getElementById("sumTotal");
+    var sumEnCurso = document.getElementById("sumEnCurso");
+    var sumFinalizado = document.getElementById("sumFinalizado");
+    var sumBloqueada = document.getElementById("sumBloqueada");
+    var sumHoras = document.getElementById("sumHoras");
+    var sumHorasProm = document.getElementById("sumHorasProm");
+
+    if (sumTotal) sumTotal.textContent = total;
+    if (sumEnCurso) sumEnCurso.textContent = counts["En curso"] || 0;
+    if (sumFinalizado) sumFinalizado.textContent = counts["Finalizado"] || 0;
+    if (sumBloqueada) sumBloqueada.textContent = (counts["Bloqueada"] || 0) + (counts["No Finalizada"] || 0);
+    if (sumHoras) sumHoras.textContent = horas.toLocaleString("es-AR");
+    if (sumHorasProm) sumHorasProm.textContent = total ? Math.round(horas / total) : 0;
 
     var tbody = document.getElementById("cohortSummaryTbody");
-    document.getElementById("cohortSummaryEmpty").style.display = state.cohorts.length ? "none" : "block";
+    var emptyEl = document.getElementById("cohortSummaryEmpty");
+    if (!tbody) return;
+    if (emptyEl) emptyEl.style.display = state.cohorts.length ? "none" : "block";
+
     tbody.innerHTML = state.cohorts.map(function (c) {
       var list = state.practices.filter(function (p) { return p.cohortId === c.id; });
       var enCurso = list.filter(function (p) { return p.estado === "En curso"; }).length;
@@ -340,6 +258,175 @@
     }).join("");
   }
 
-  // Init
-  loadFromStorage();
+  document.addEventListener("DOMContentLoaded", function () {
+    var todayLabel = document.getElementById("todayLabel");
+    if (todayLabel) {
+      todayLabel.textContent = new Date().toLocaleDateString("es-AR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    }
+
+    // Escuchador de clics en las pestañas
+    var tabsNav = document.getElementById("tabs");
+    if (tabsNav) {
+      tabsNav.addEventListener("click", function (e) {
+        var btn = e.target.closest("button[data-view]");
+        if (!btn) return;
+        var view = btn.getAttribute("data-view");
+        switchTab(view);
+      });
+    }
+
+    var cohortsTbody = document.getElementById("cohortsTbody");
+    if (cohortsTbody) {
+      cohortsTbody.addEventListener("click", function (e) {
+        var editId = e.target.dataset.editcohort;
+        var delId = e.target.dataset.delcohort;
+        if (editId) openCohortModal(editId);
+        if (delId) {
+          if (confirm("¿Eliminar esta cohorte? Las prácticas asociadas no se borran, pero quedarán sin cohorte.")) {
+            state.cohorts = state.cohorts.filter(function(x) { return x.id !== delId; });
+            saveCohorts();
+            toast("Cohorte eliminada");
+          }
+        }
+      });
+    }
+
+    var newCohortBtn = document.getElementById("newCohortBtn");
+    if (newCohortBtn) newCohortBtn.addEventListener("click", function () { openCohortModal(null); });
+
+    var cohortCancelBtn = document.getElementById("cohortCancelBtn");
+    if (cohortCancelBtn) cohortCancelBtn.addEventListener("click", function () { document.getElementById("cohortModalBg").classList.remove("show"); });
+
+    var cohortSaveBtn = document.getElementById("cohortSaveBtn");
+    if (cohortSaveBtn) {
+      cohortSaveBtn.addEventListener("click", function () {
+        var specialty = document.getElementById("cSpecialty").value.trim();
+        var year = Number(document.getElementById("cYear").value) || null;
+        if (!specialty || !year) { toast("Completá especialidad y año"); return; }
+        var data = { specialty: specialty, year: year, horasObjetivo: Number(document.getElementById("cHorasObjetivo").value) || 0 };
+        
+        if (state.editingCohortId) {
+          var idx = state.cohorts.findIndex(function(x) { return x.id === state.editingCohortId; });
+          if (idx !== -1) state.cohorts[idx] = Object.assign({}, state.cohorts[idx], data);
+        } else {
+          data.id = "c_" + Date.now();
+          state.cohorts.push(data);
+        }
+        saveCohorts();
+        toast("Cohorte guardada");
+        document.getElementById("cohortModalBg").classList.remove("show");
+      });
+    }
+
+    var pSearch = document.getElementById("practiceSearch");
+    if (pSearch) pSearch.addEventListener("input", renderPractices);
+
+    var pCohortFilter = document.getElementById("practiceCohortFilter");
+    if (pCohortFilter) pCohortFilter.addEventListener("change", renderPractices);
+
+    var pStatusFilter = document.getElementById("practiceStatusFilter");
+    if (pStatusFilter) pStatusFilter.addEventListener("change", renderPractices);
+
+    var practicesTbody = document.getElementById("practicesTbody");
+    if (practicesTbody) {
+      practicesTbody.addEventListener("click", function (e) {
+        var editId = e.target.dataset.edit;
+        var delId = e.target.dataset.del;
+        if (editId) openPracticeModal(editId);
+        if (delId) {
+          if (confirm("¿Eliminar esta práctica?")) {
+            state.practices = state.practices.filter(function(x) { return x.id !== delId; });
+            savePractices();
+            toast("Práctica eliminada");
+          }
+        }
+      });
+    }
+
+    var newPracticeBtn = document.getElementById("newPracticeBtn");
+    if (newPracticeBtn) {
+      newPracticeBtn.addEventListener("click", function () {
+        if (!state.cohorts.length) { toast("Creá primero una cohorte"); return; }
+        openPracticeModal(null);
+      });
+    }
+
+    var practiceCancelBtn = document.getElementById("practiceCancelBtn");
+    if (practiceCancelBtn) practiceCancelBtn.addEventListener("click", function () { document.getElementById("practiceModalBg").classList.remove("show"); });
+
+    var pCohortSelect = document.getElementById("pCohort");
+    if (pCohortSelect) {
+      pCohortSelect.addEventListener("change", function () {
+        if (state.editingPracticeId) return;
+        var c = state.cohortsById[this.value];
+        if (c && c.horasObjetivo != null) document.getElementById("pHorasObjetivo").value = c.horasObjetivo;
+      });
+    }
+
+    var practiceSaveBtn = document.getElementById("practiceSaveBtn");
+    if (practiceSaveBtn) {
+      practiceSaveBtn.addEventListener("click", function () {
+        var alumno = document.getElementById("pAlumno").value.trim();
+        var cohortId = document.getElementById("pCohort").value;
+        if (!alumno) { toast("El nombre del alumno es obligatorio"); return; }
+        if (!cohortId) { toast("Elegí una cohorte"); return; }
+        var data = {
+          alumno: alumno,
+          dni: document.getElementById("pDni").value.trim(),
+          celular: document.getElementById("pCelular").value.trim(),
+          email: document.getElementById("pEmail").value.trim(),
+          cohortId: cohortId,
+          oferente: document.getElementById("pOferente").value.trim(),
+          rotacion: document.getElementById("pRotacion").value,
+          estado: document.getElementById("pEstado").value,
+          fechaInicio: document.getElementById("pFechaInicio").value,
+          fechaFin: document.getElementById("pFechaFin").value,
+          entrada: document.getElementById("pEntrada").value,
+          salida: document.getElementById("pSalida").value,
+          turno: document.getElementById("pTurno").value,
+          dias: document.getElementById("pDias").value.trim(),
+          horasRealizadas: Number(document.getElementById("pHorasRealizadas").value) || 0,
+          horasObjetivo: Number(document.getElementById("pHorasObjetivo").value) || 0,
+          calificacion: document.getElementById("pCalificacion").value.trim(),
+          autorizacion: document.getElementById("pAutorizacion").value === "true",
+          encuestaFinal: document.getElementById("pEncuesta").value === "true",
+          disposiciones: document.getElementById("pDisposiciones").value.trim(),
+          notas: document.getElementById("pNotas").value.trim()
+        };
+
+        if (state.editingPracticeId) {
+          var idx = state.practices.findIndex(function(x) { return x.id === state.editingPracticeId; });
+          if (idx !== -1) state.practices[idx] = Object.assign({}, state.practices[idx], data);
+        } else {
+          data.id = "p_" + Date.now();
+          state.practices.push(data);
+        }
+        savePractices();
+        toast("Práctica guardada");
+        document.getElementById("practiceModalBg").classList.remove("show");
+      });
+    }
+
+    var exportCsvBtn = document.getElementById("exportCsvBtn");
+    if (exportCsvBtn) {
+      exportCsvBtn.addEventListener("click", function () {
+        var rows = [["Alumno", "DNI", "Cohorte", "Oferente", "Rotación", "Estado", "Horas realizadas", "Horas objetivo", "Fecha inicio", "Fecha fin", "Calificación"]];
+        state.practices.forEach(function (p) {
+          var c = state.cohortsById[p.cohortId];
+          rows.push([p.alumno || "", p.dni || "", c ? cohortName(c) : "", p.oferente || "", p.rotacion || "", p.estado || "",
+            p.horasRealizadas || 0, p.horasObjetivo || 0, p.fechaInicio || "", p.fechaFin || "", p.calificacion || ""]);
+        });
+        var csvContent = "data:text/csv;charset=utf-8,\uFEFF" + rows.map(function (r) { return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
+        var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "practicas.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    }
+
+    loadFromStorage();
+  });
 })();
