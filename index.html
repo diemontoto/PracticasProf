@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prácticas Profesionalizantes | MMO - San Miguel</title>
+  <title>Gestión de Alumnos - Prácticas Profesionalizantes</title>
   <style>
     :root {
-      --primary: #1e3a8a;
-      --primary-hover: #1d4ed8;
+      --primary: #0f172a;
+      --accent: #2563eb;
       --bg: #f8fafc;
       --card-bg: #ffffff;
-      --text: #0f172a;
-      --text-muted: #475569;
       --border: #e2e8f0;
-      --success: #166534;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --success: #15803d;
       --success-bg: #dcfce7;
-      --warning: #854d0e;
-      --warning-bg: #fef9c3;
+      --warning: #b45309;
+      --warning-bg: #fef3c7;
+      --danger: #b91c1c;
+      --danger-bg: #fee2e2;
     }
 
     * {
@@ -29,27 +31,29 @@
     body {
       background-color: var(--bg);
       color: var(--text);
-      line-height: 1.6;
+      line-height: 1.5;
       padding-bottom: 3rem;
     }
 
     header {
-      background-color: var(--primary);
+      background: var(--primary);
       color: white;
-      padding: 2.5rem 1.5rem;
-      text-align: center;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      padding: 2rem 1.5rem;
+      border-bottom: 4px solid var(--accent);
     }
 
-    header h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+    .header-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
 
-    header p {
-      opacity: 0.9;
-      font-size: 1rem;
-    }
+    .header-titles h1 { font-size: 1.75rem; font-weight: 700; }
+    .header-titles p { color: #94a3b8; font-size: 0.95rem; }
 
     main {
       max-width: 1100px;
@@ -57,16 +61,35 @@
       padding: 0 1rem;
     }
 
-    .controls-panel {
+    /* KPI Summary Cards */
+    .kpi-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .kpi-card {
       background: var(--card-bg);
       padding: 1.25rem;
       border-radius: 8px;
       border: 1px solid var(--border);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .kpi-title { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--primary); margin-top: 0.25rem; }
+
+    /* Filter Controls */
+    .controls {
+      background: var(--card-bg);
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
       display: flex;
-      flex-wrap: wrap;
       gap: 1rem;
-      align-items: center;
-      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
     }
 
     .search-input, .select-filter {
@@ -77,256 +100,246 @@
       outline: none;
     }
 
-    .search-input {
-      flex: 1;
-      min-width: 240px;
-    }
+    .search-input { flex: 1; min-width: 260px; }
+    .search-input:focus, .select-filter:focus { border-color: var(--accent); }
 
-    .search-input:focus, .select-filter:focus {
-      border-color: var(--primary);
-    }
-
-    .grid-container {
+    /* Student Cards Grid */
+    .students-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 1.5rem;
     }
 
-    .card {
+    .student-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 1.5rem;
+      padding: 1.25rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: transform 0.15s ease;
     }
 
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
+    .student-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
 
-    .card-header {
+    .student-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 0.75rem;
-      gap: 0.5rem;
+      margin-bottom: 0.5rem;
     }
 
-    .card-title {
-      font-size: 1.15rem;
-      color: var(--primary);
-      font-weight: 600;
-    }
+    .student-name { font-size: 1.15rem; font-weight: 700; color: var(--primary); }
+    .student-course { font-size: 0.85rem; color: var(--text-muted); }
 
     .badge {
       font-size: 0.75rem;
-      padding: 0.25rem 0.6rem;
-      border-radius: 20px;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
       font-weight: 600;
       white-space: nowrap;
     }
 
-    .badge-en-curso {
-      background-color: var(--warning-bg);
-      color: var(--warning);
-    }
+    .badge-aprobado { background-color: var(--success-bg); color: var(--success); }
+    .badge-en-curso { background-color: var(--warning-bg); color: var(--warning); }
+    .badge-pendiente { background-color: var(--danger-bg); color: var(--danger); }
 
-    .badge-finalizado {
-      background-color: var(--success-bg);
-      color: var(--success);
-    }
+    /* Progress Bar */
+    .progress-section { margin: 1rem 0; }
+    .progress-labels { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .progress-bar-bg { background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden; }
+    .progress-bar-fill { background: var(--accent); height: 100%; transition: width 0.3s ease; }
 
-    .meta-info {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
+    .details { font-size: 0.88rem; margin-top: 0.5rem; color: var(--text); }
+    .details p { margin-bottom: 0.3rem; }
+    .details strong { color: var(--primary); }
 
-    .card-description {
-      font-size: 0.95rem;
-      color: var(--text);
-      margin-bottom: 1rem;
-    }
-
-    .entregables-list {
-      font-size: 0.85rem;
+    .obs-box {
       background: #f1f5f9;
-      padding: 0.75rem;
+      padding: 0.6rem 0.8rem;
       border-radius: 6px;
-      margin-top: auto;
+      font-size: 0.82rem;
+      color: #334155;
+      margin-top: 0.8rem;
+      border-left: 3px solid var(--accent);
     }
 
-    .entregables-list strong {
-      display: block;
-      margin-bottom: 0.25rem;
-      color: var(--text-muted);
-    }
-
-    .entregables-list ul {
-      list-style-type: disc;
-      padding-left: 1.2rem;
-    }
-
-    .error-msg {
-      background-color: #fef2f2;
-      border: 1px solid #fca5a5;
-      color: #991b1b;
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
-      grid-column: 1 / -1;
-    }
-
-    .empty-msg {
-      text-align: center;
-      grid-column: 1 / -1;
-      color: var(--text-muted);
-      padding: 3rem;
-    }
+    .msg-box { text-align: center; grid-column: 1 / -1; padding: 2rem; color: var(--text-muted); }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>Prácticas Profesionalizantes</h1>
-    <p>Maestro Mayor de Obras (MMO) — San Miguel</p>
+    <div class="header-container">
+      <div class="header-titles">
+        <h1>Gestión de Alumnos P.P.</h1>
+        <p>EEST N°3 "Japón" — CENS | San Miguel</p>
+      </div>
+      <div id="profesorTag" style="font-size: 0.9rem; background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 6px;">
+        Coordinación: Cátedra P.P.
+      </div>
+    </div>
   </header>
 
   <main>
-    <section class="controls-panel">
-      <input type="text" id="searchInput" class="search-input" placeholder="Buscar por título o contenido...">
-      
+    <!-- KPIs -->
+    <section class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-title">Total Alumnos</div>
+        <div class="kpi-value" id="kpiTotal">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Prácticas Aprobadas</div>
+        <div class="kpi-value" id="kpiAprobados" style="color: var(--success);">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">En Cursada</div>
+        <div class="kpi-value" id="kpiEnCurso" style="color: var(--warning);">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Promedio Horas</div>
+        <div class="kpi-value" id="kpiPromedioHoras">0 hs</div>
+      </div>
+    </section>
+
+    <!-- Controls -->
+    <section class="controls">
+      <input type="text" id="searchInput" class="search-input" placeholder="Buscar por alumno, curso o práctica...">
       <select id="statusFilter" class="select-filter">
         <option value="todos">Todos los estados</option>
         <option value="En curso">En curso</option>
-        <option value="Finalizado">Finalizado</option>
-      </select>
-
-      <select id="yearFilter" class="select-filter">
-        <option value="todos">Todos los años</option>
-        <option value="2026">2026</option>
-        <option value="2025">2025</option>
+        <option value="Aprobado">Aprobado</option>
+        <option value="Pendiente">Pendiente</option>
       </select>
     </section>
 
-    <section id="practicasContainer" class="grid-container">
-      <p class="empty-msg">Cargando base de datos...</p>
+    <!-- Student Cards -->
+    <section id="studentsContainer" class="students-grid">
+      <div class="msg-box">Cargando nómina de estudiantes...</div>
     </section>
   </main>
 
   <script>
-    let todasLasPracticas = [];
+    let alumnosData = [];
+    let horasMeta = 200;
 
-    // Cargar la base de datos de forma segura
-    async function initApp() {
-      const container = document.getElementById('practicasContainer');
-      
-      // Intentar varias rutas comunes para prevenir fallos de ubicación en GH Pages
-      const posiblesRutas = ['./data/db.json', 'data/db.json', '/PracticasProf/data/db.json'];
+    async function init() {
+      const container = document.getElementById('studentsContainer');
+      const rutas = ['./data/db.json', 'data/db.json', '/PracticasProf/data/db.json'];
       let data = null;
 
-      for (const ruta of posiblesRutas) {
+      for (const ruta of rutas) {
         try {
           const res = await fetch(ruta);
           if (res.ok) {
             data = await res.json();
             break;
           }
-        } catch (e) {
-          // Continuar al siguiente intento
-        }
+        } catch (e) {}
       }
 
-      if (!data || !data.practicas) {
+      if (!data || !data.estudiantes) {
         container.innerHTML = `
-          <div class="error-msg">
-            <strong>Error al cargar la base de datos</strong><br>
-            Asegúrate de haber creado el archivo <code>data/db.json</code> en tu repositorio.
-          </div>
-        `;
+          <div class="msg-box" style="color: var(--danger);">
+            <strong>Error de carga:</strong> No se pudo encontrar el archivo <code>data/db.json</code>.<br>
+            Verifica que la carpeta y el archivo existan en tu repositorio de GitHub.
+          </div>`;
         return;
       }
 
-      todasLasPracticas = data.practicas;
-      renderPracticas(todasLasPracticas);
-      setupEventListeners();
+      alumnosData = data.estudiantes;
+      if (data.institucion && data.institucion.horas_requeridas_total) {
+        horasMeta = data.institucion.horas_requeridas_total;
+      }
+
+      actualizarKPIs(alumnosData);
+      renderAlumnos(alumnosData);
+      setupEvents();
     }
 
-    // Renderizar las tarjetas
-    function renderPracticas(items) {
-      const container = document.getElementById('practicasContainer');
+    function actualizarKPIs(alumnos) {
+      document.getElementById('kpiTotal').innerText = alumnos.length;
+      document.getElementById('kpiAprobados').innerText = alumnos.filter(a => a.estado_general === 'Aprobado').length;
+      document.getElementById('kpiEnCurso').innerText = alumnos.filter(a => a.estado_general === 'En curso').length;
 
-      if (items.length === 0) {
-        container.innerHTML = '<p class="empty-msg">No se encontraron prácticas que coincidan con los filtros.</p>';
+      const totalHoras = alumnos.reduce((sum, a) => sum + (a.horas_completadas || 0), 0);
+      const promedio = alumnos.length > 0 ? Math.round(totalHoras / alumnos.length) : 0;
+      document.getElementById('kpiPromedioHoras').innerText = `${promedio} hs`;
+    }
+
+    function renderAlumnos(alumnos) {
+      const container = document.getElementById('studentsContainer');
+
+      if (alumnos.length === 0) {
+        container.innerHTML = '<div class="msg-box">No hay estudiantes que coincidan con los filtros aplicados.</div>';
         return;
       }
 
-      container.innerHTML = items.map(p => {
-        const badgeClass = p.estado === 'En curso' ? 'badge-en-curso' : 'badge-finalizado';
-        const entregablesHTML = p.entregables && p.entregables.length > 0
-          ? `<div class="entregables-list">
-               <strong>Entregables:</strong>
-               <ul>${p.entregables.map(e => `<li>${e}</li>`).join('')}</ul>
-             </div>`
-          : '';
+      container.innerHTML = alumnos.map(a => {
+        const porcentaje = Math.min(100, Math.round((a.horas_completadas / horasMeta) * 100));
+        let badgeClass = 'badge-en-curso';
+        if (a.estado_general === 'Aprobado') badgeClass = 'badge-aprobado';
+        if (a.estado_general === 'Pendiente') badgeClass = 'badge-pendiente';
 
         return `
-          <article class="card">
+          <article class="student-card">
             <div>
-              <div class="card-header">
-                <h2 class="card-title">${p.titulo}</h2>
-                <span class="badge ${badgeClass}">${p.estado}</span>
+              <div class="student-header">
+                <div>
+                  <div class="student-name">${a.apellido}, ${a.nombre}</div>
+                  <div class="student-course">${a.curso} | DNI: ${a.dni_mask}</div>
+                </div>
+                <span class="badge ${badgeClass}">${a.estado_general}</span>
               </div>
-              <div class="meta-info">
-                <span><strong>Año:</strong> ${p.anio}</span>
-                <span>•</span>
-                <span><strong>Código:</strong> ${p.codigo_mmo}</span>
-                <span>•</span>
-                <span><strong>Carga:</strong> ${p.horas_acreditadas}hs</span>
+
+              <!-- Horas Bar -->
+              <div class="progress-section">
+                <div class="progress-labels">
+                  <span>Horas Acreditadas</span>
+                  <span>${a.horas_completadas} / ${horasMeta} hs (${porcentaje}%)</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" style="width: ${porcentaje}%;"></div>
+                </div>
               </div>
-              <p class="card-description">${p.descripcion}</p>
+
+              <!-- Detalle -->
+              <div class="details">
+                <p><strong>Práctica:</strong> ${a.practica_actual}</p>
+                <p><strong>Modalidad:</strong> ${a.modalidad}</p>
+                <p><strong>Entorno / Tutor:</strong> ${a.empresa_tutor}</p>
+              </div>
             </div>
-            ${entregablesHTML}
+
+            <div class="obs-box">
+              <strong>Seguimiento:</strong> ${a.observaciones || 'Sin observaciones registradas.'}
+            </div>
           </article>
         `;
       }).join('');
     }
 
-    // Filtrar prácticas
-    function filterPracticas() {
-      const search = document.getElementById('searchInput').value.toLowerCase();
+    function filtrar() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
       const status = document.getElementById('statusFilter').value;
-      const year = document.getElementById('yearFilter').value;
 
-      const filtradas = todasLasPracticas.filter(p => {
-        const matchSearch = p.titulo.toLowerCase().includes(search) || 
-                            p.descripcion.toLowerCase().includes(search) ||
-                            p.codigo_mmo.toLowerCase().includes(search);
-        
-        const matchStatus = status === 'todos' || p.estado === status;
-        const matchYear = year === 'todos' || p.anio.toString() === year;
-
-        return matchSearch && matchStatus && matchYear;
+      const filtrados = alumnosData.filter(a => {
+        const matchQuery = `${a.nombre} ${a.apellido} ${a.curso} ${a.practica_actual}`.toLowerCase().includes(query);
+        const matchStatus = status === 'todos' || a.estado_general === status;
+        return matchQuery && matchStatus;
       });
 
-      renderPracticas(filtradas);
+      renderAlumnos(filtrados);
     }
 
-    function setupEventListeners() {
-      document.getElementById('searchInput').addEventListener('input', filterPracticas);
-      document.getElementById('statusFilter').addEventListener('change', filterPracticas);
-      document.getElementById('yearFilter').addEventListener('change', filterPracticas);
+    function setupEvents() {
+      document.getElementById('searchInput').addEventListener('input', filtrar);
+      document.getElementById('statusFilter').addEventListener('change', filtrar);
     }
 
-    document.addEventListener('DOMContentLoaded', initApp);
+    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
