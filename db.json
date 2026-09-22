@@ -1,0 +1,94 @@
+{
+  "institucion": {
+    "nombre": "Escuela de Educación Secundaria Técnica",
+    "especialidad": "Maestro Mayor de Obras (MMO)",
+    "distrito": "San Miguel",
+    "provincia": "Buenos Aires"
+  },
+  "profesores": [
+    {
+      "id": "prof-01",
+      "nombre": "Diego Alejandro Montoto",
+      "rol": "Coordinador / Docente de Prácticas Profesionalizantes",
+      "email": "contacto@ejemplo.com"
+    }
+  ],
+  "ciclos_lectivos": [
+    {
+      "anio": 2026,
+      "activo": true
+    }
+  ],
+  "empresas_convenios": [
+    {
+      "id": "emp-01",
+      "razon_social": "Estudio de Arquitectura & Construcciones S.A.",
+      "tutor_externo": "Arq. Roberto Gómez",
+      "contacto_email": "contacto@estudio.com",
+      "rubro": "Proyecto y Dirección de Obra"
+    }
+  ],
+  "practicas": [
+    {
+      "id": "pr-2026-01",
+      "titulo": "Cálculo de Indicadores Urbanísticos (FOS / FOT)",
+      "codigo_mmo": "MMO-URB-01",
+      "modalidad": "Interna / Proyecto Pedagógico",
+      "horas_acreditadas": 80,
+      "estado": "En curso",
+      "estudiantes_ids": ["est-01", "est-02"],
+      "descripcion": "Relevamiento de terreno, cálculo de FOS, FOT y redacción de memoria descriptiva según Código de Edificación.",
+      "entregables": [
+        "Plano de implantación (.dwg / .pdf)",
+        "Memoria de cálculo de superficie construible"
+      ]
+    },
+    {
+      "id": "pr-2026-02",
+      "titulo": "Cómputo y Presupuesto de Muro Divisorio",
+      "codigo_mmo": "MMO-OBR-02",
+      "modalidad": "Pasantía Externa",
+      "empresa_id": "emp-01",
+      "horas_acreditadas": 120,
+      "estado": "Finalizado",
+      "estudiantes_ids": ["est-03"],
+      "descripcion": "Cómputo métrico de mampostería, estructuras y cotización de materiales en obra de San Miguel.",
+      "entregables": [
+        "Planilla de cómputo métrico",
+        "Presupuesto detallado de materiales y mano de obra"
+      ]
+    }
+  ],
+  "estudiantes": [
+    {
+      "id": "est-01",
+      "nombre": "Francisco",
+      "apellido": "García",
+      "dni_mask": "******89",
+      "curso": "7mo 1ra",
+      "estado_practica": "En curso"
+    },
+    {
+      "id": "est-02",
+      "nombre": "Lucía",
+      "apellido": "Fernández",
+      "dni_mask": "******12",
+      "curso": "7mo 1ra",
+      "estado_practica": "En curso"
+    }
+  ],
+  "normativa_documentos": [
+    {
+      "id": "doc-01",
+      "nombre": "Reglamento de Prácticas Profesionalizantes (Resolución Provincial)",
+      "categoria": "Institucional",
+      "url_archivo": "./docs/reglamento_pp.pdf"
+    },
+    {
+      "id": "doc-02",
+      "nombre": "Modelo de Planilla de Asistencia y Bitácora de Obra",
+      "categoria": "Planillas",
+      "url_archivo": "./docs/bitacora_alumnos.pdf"
+    }
+  ]
+}
